@@ -1,0 +1,13 @@
+.env
+
+.DS_Store
+__MACOSX
+# Jupiter Notebook #
+.pytest_cache
+__pycache__
+*checkpoint.ipynb
+*.ipynb_checkpoints
+
+.history
+.envrc
+.python-version
