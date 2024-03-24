@@ -2,6 +2,7 @@ import requests
 import base64
 import os
 
+
 class SpotifyAPI:
     def __init__(self, client_id: str, client_secret: str) -> None:
         """
@@ -86,7 +87,9 @@ class SpotifyAPI:
         else:
             raise Exception(f"Failed to get audio link: {response.text}")
 
-    def download_audio(self, audio_link: str, destination_path: str, destination_filename: str) -> None:
+    def download_audio(
+        self, audio_link: str, destination_path: str, destination_filename: str
+    ) -> None:
         """
         Download audio from the given audio link and save it to the destination path.
 
@@ -99,8 +102,12 @@ class SpotifyAPI:
 
         if response.status_code == 200:
             # Save the audio content to the destination file
-            with open(os.path.join(destination_path, destination_filename), "wb") as file:
+            with open(
+                os.path.join(destination_path, destination_filename), "wb"
+            ) as file:
                 file.write(response.content)
-            print(f"Audio file saved to: {os.path.join(destination_path, destination_filename)}")
+            print(
+                f"Audio file saved to: {os.path.join(destination_path, destination_filename)}"
+            )
         else:
             raise Exception(f"Failed to download audio: {response.text}")
