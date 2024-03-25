@@ -34,6 +34,29 @@ def cut_audio_into_sliding_intervals(file_path: str, interval_length: float) -> 
     return extracted_segments
 
 
+def get_segment_time(index: int, interval_length: float) -> tuple:
+    """
+    Get the start and end time of a segment given its index and interval length.
+
+    Args:
+        index (int): Index of the segment.
+        interval_length (float): Length of each segment in seconds.
+
+    Returns:
+        tuple: A tuple containing the start and end time of the segment formatted as 'mm:ss'.
+    """
+    start_time = index
+    end_time = index + interval_length
+
+    start_minutes, start_seconds = divmod(start_time, 60)
+    end_minutes, end_seconds = divmod(int(end_time), 60)
+
+    start_time_formatted = f"{start_minutes:02d}:{start_seconds:02d}"
+    end_time_formatted = f"{end_minutes:02d}:{end_seconds:02d}"
+
+    return start_time_formatted, end_time_formatted
+
+
 def convert_to_chromagram(segment: AudioSegment, hop_length: int = 2048) -> np.ndarray:
     """
     Convert an audio segment into a chromagram.
