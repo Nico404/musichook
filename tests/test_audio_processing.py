@@ -8,6 +8,7 @@ from musichook.sound_similarity.audio_processing import (
     cut_audio_into_sliding_intervals,
     convert_to_chromagram,
     compare_images,
+    get_segment_time,
 )
 
 
@@ -74,6 +75,9 @@ def test_audio_processing():
         format="mp3",
     )
     print(f"""segment_{max_segment_number}.mp3 saved in {PATHS["STAGING_FOLDER"]}""")
+
+    # get the start and end times of the segment
+    print(get_segment_time(max_segment_number, preview_length))
 
     print("--------------------------------")
     print("Testing audio processing DONE...")
