@@ -97,7 +97,11 @@ class SpotifyAPI:
             audio_link (str): Audio link (URL).
             destination_path (str): Destination directory to save the audio file.
             destination_filename (str): Destination filename to save the audio file.
+
+        Returns:
+            Path: local path to downloaded audio file.
         """
+
         response = requests.get(audio_link)
 
         if response.status_code == 200:
@@ -109,5 +113,6 @@ class SpotifyAPI:
             print(
                 f"Audio file saved to: {os.path.join(destination_path, destination_filename)}"
             )
+            return os.path.join(destination_path, destination_filename)
         else:
             raise Exception(f"Failed to download audio: {response.text}")
