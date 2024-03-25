@@ -1,18 +1,20 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from params import PATHS, SECRETS
-from sound_similarity.spotify_api import SpotifyAPI
 from pydub import AudioSegment
-from sound_similarity.audio_processing import (
+
+from musichook.params import PATHS
+from musichook.sound_similarity.audio_processing import (
     cut_audio_into_sliding_intervals,
     convert_to_chromagram,
-    display_chromagram,
     compare_images,
 )
 
 
-if __name__ == "__main__":
+def test_audio_processing():
+    print("--------------------------------")
+    print("Testing audio processing...")
+    print("--------------------------------")
 
     # load spotify preview audio
     preview_path = os.path.join(PATHS["SPOTIFY_FOLDER"], "Dani California.mp3")
@@ -58,14 +60,8 @@ if __name__ == "__main__":
         ssim, mse = compare_images(chromagram, preview_chromagram)
         chronogram_comparaison_results[segment_number] = {"ssim": ssim, "mse": mse}
 
-    # # plot results of comparison
-    # df = pd.DataFrame(chronogram_comparaison_results).T
-    # df.plot(y=["ssim", "mse"], title="Comparison of chromagrams")
-    # plt.show()
-
     # get segment with maximum ssim
-    max_segment_number = int()
-    max_segment_value = 0
+    max_segment_number, max_segment_value = int(), 0
     for segment_number, results in chronogram_comparaison_results.items():
         if results["ssim"] > max_segment_value:
             max_segment_value = results["ssim"]
@@ -78,3 +74,11 @@ if __name__ == "__main__":
         format="mp3",
     )
     print(f"""segment_{max_segment_number}.mp3 saved in {PATHS["STAGING_FOLDER"]}""")
+
+    print("--------------------------------")
+    print("Testing audio processing DONE...")
+    print("--------------------------------")
+
+
+if __name__ == "__main__":
+    test_audio_processing()
