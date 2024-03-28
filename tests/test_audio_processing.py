@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from pydub import AudioSegment
 
 from musichook.params import PATHS
-from musichook.sound_similarity.audio_processing import (
+from musichook.src.audio_processing import (
     cut_audio_into_sliding_intervals,
     convert_to_chromagram,
     compare_images,

@@ -2,9 +2,9 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from params import PATHS, SECRETS
-from sound_similarity.spotify_api import SpotifyAPI
+from src.spotify_api import SpotifyAPI
 from pydub import AudioSegment
-from sound_similarity.audio_processing import (
+from src.audio_processing import (
     cut_audio_into_sliding_intervals,
     convert_to_chromagram,
     display_chromagram,
@@ -64,8 +64,7 @@ if __name__ == "__main__":
     # plt.show()
 
     # get segment with maximum ssim
-    max_segment_number = int()
-    max_segment_value = 0
+    max_segment_number, max_segment_value = int(), 0
     for segment_number, results in chronogram_comparaison_results.items():
         if results["ssim"] > max_segment_value:
             max_segment_value = results["ssim"]
