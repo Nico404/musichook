@@ -1,5 +1,5 @@
 from musichook.params import PATHS, SECRETS
-from musichook.sound_similarity.spotify_api import SpotifyAPI
+from musichook.src.spotify_api import SpotifyAPI
 
 
 def test_spotify_api():

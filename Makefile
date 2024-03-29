@@ -6,3 +6,6 @@ test_spotify_api :
 
 test_audio_processing :
 	python tests/test_audio_processing.py
+
+test_self_chorus_detection :
+	python tests/test_self_chorus_detection.py
