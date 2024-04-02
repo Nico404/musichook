@@ -1,0 +1,68 @@
+<div class="mt-8 sm:mx-auto sm:w-full sm:max-w-xl">
+  <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+    <div id="waveform">
+    </div>
+    <div id="audio">
+    </div>
+
+    <script type="module">
+      import WaveSurfer from 'https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.esm.js'
+      import RegionsPlugin from 'https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.esm.js'
+
+      // Create your own media element
+      const audio = new Audio()
+      audio.controls = true
+      // audio.src = 'audio/002 - 8 Mile By Eminem 320 - [m94arius].mp3'
+      // audio.src = 'audio/001 - Creep By Radiohead 320 - [Coldblackice].mp3'
+      audio.src="{{ url_for('static', filename='uploads/song.mp3') }}"
+      // Define variables for start and end times
+      let startTime = "{{ start_time }}" // Adjust as needed 02:26
+      let endTime = "{{ end_time }}"   // Adjust as needed
+
+      const ws = WaveSurfer.create({
+        container: '#waveform',
+        waveColor: 'rgba(0,19,222, 0.5)',
+        progressColor: 'rgba(0, 19, 200, 0.2)',
+        media: audio,
+        barWidth: 2,
+        barGap: 6,
+        barRadius: 1,
+      });
+
+      // Initialize the Regions plugin
+      let wsRegions = ws.registerPlugin(RegionsPlugin.create())
+
+      // Create some regions at specific time ranges
+      ws.on('ready', () => {
+        // Regions
+        wsRegions.addRegion({
+          start: startTime,
+          end: endTime,
+          content: 'Hook',
+          color: 'rgba(255, 127, 0, 0.5)',
+          drag: true, // Allow drag to resize
+          resize: true,
+        });
+        // start playing at the start time
+        ws.seekTo(startTime / ws.getDuration())
+      })
+
+      // Keep track of the playback status
+      let isPlaying = false
+
+      // Toggle between playing and pausing the audio
+      ws.on('click', () => {
+        if (isPlaying) {
+          ws.pause();
+          isPlaying = false
+        } else {
+          ws.play()
+          isPlaying = true
+        }
+      })
+
+      document.getElementById('audio').appendChild(audio);
+
+    </script>
+  </div>
+</div>
