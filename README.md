@@ -3,6 +3,14 @@
 ## Overview
 This repository explores various techniques for music thumbnailing, a process of summarizing or representing music pieces with concise excerpts or thumbnails. The primary focus lies on two main approaches: sound similarity analysis using Spotify API and self-chorus detection based on chroma-based representations.
 
+
+## Music Thumbnailing app
+
+### Demo App [musichook-app](https://musichook-qz5vasr6bq-ew.a.run.app/upload)
+
+![Thumbnailing-app](https://i.imgur.com/g26op22.png)
+
+
 ## Sound Similarity
 Utilizing the Spotify API, this project downloads song previews, segments the original songs into consistent-sized pieces, and computes the Structural Similarity Index (SSIM) on the chromagram to identify start and end times within the songs.
 
