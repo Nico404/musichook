@@ -54,7 +54,7 @@ def upload_file():
             time_lag_surface = correlation_filter(similarity_matrix, 20)
             print("Select the thumbnail")
             start_time, window_size_out = select_thumbnail(time_lag_surface)
-            start_time = start_time / 4
+            start_time = start_time
             end_time = start_time + 30
 
             return render_template(
