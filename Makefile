@@ -14,7 +14,7 @@ build_dev:
 	docker build -t musichook:dev .
 
 build_prod:
-	docker build --platform linux/amd64 -t $GCP_REGION-docker.pkg.dev/$GCP_PROJECT/$GCP_REPO/musichook:prod .
+	docker build --platform linux/amd64 -t $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT)/$(GCP_REPO)/musichook:prod .
 
 run_dev:
 	docker run -e PORT=8000 -p 8000:8000 musichook:dev
@@ -23,7 +23,7 @@ run_dev_it:
 	docker run -it -e PORT=8000 -p 8000:8000 musichook:dev bash
 
 push_prod:
-	docker push $GCP_REGION-docker.pkg.dev/$GCP_PROJECT/$GCP_REPO/musichook:prod
+	docker push $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT)/$(GCP_REPO)/musichook:prod
 
 deploy_prod:
-	gcloud run deploy --image $GCP_REGION-docker.pkg.dev/$GCP_PROJECT/$GCP_REPO/musichook:prod --memory 8Gi --region $GCP_REGION
+	gcloud run deploy --image $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT)/$(GCP_REPO)/musichook:prod --memory 8Gi --region $(GCP_REGION)
