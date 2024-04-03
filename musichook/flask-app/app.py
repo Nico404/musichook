@@ -40,37 +40,38 @@ def upload_file():
         file.save(filepath)
         print("File uploaded successfully:", filename)
 
-        try:
-            ### Audio Processing
-            print("Cutting the song into segments...")
-            quarter_second_segments = cut_song_into_segments(filepath, 250)
-            print("Building the feature vector...")
-            feature_vector = build_feature_vector(
-                quarter_second_segments, True, False, False
-            )
-            print("Compute similarity matrix")
-            similarity_matrix = compute_similarity_matrix(feature_vector, "cosine")
-            print("Compute time_lag_surface matrix")
-            time_lag_surface = correlation_filter(similarity_matrix, 20)
-            print("Select the thumbnail")
-            start_time, window_size_out = select_thumbnail(time_lag_surface)
-            start_time = start_time
-            end_time = start_time + 30
+        ### Audio Processing
+        chunk_length = 500
+        print("Cutting the song into segments...")
+        quarter_second_segments = cut_song_into_segments(filepath, chunk_length)
+        print("Building the feature vector...")
+        feature_vector = build_feature_vector(
+            quarter_second_segments, True, False, False
+        )
+        print("Compute similarity matrix")
+        similarity_matrix = compute_similarity_matrix(feature_vector, "cosine")
+        print("Compute time_lag_surface matrix")
+        time_lag_surface = correlation_filter(similarity_matrix, 20)
+        print("Select the thumbnail")
+        start_time = select_thumbnail(time_lag_surface, chunk_length)
 
+        if start_time is not None:
+            print("Start time of the selected thumbnail:", start_time)
+            end_time = start_time + 30  # End time is 30 seconds after the start time
+            print("End time of the selected thumbnail:", end_time)
+            print('Rendering the template')
+            return render_template(
+            "index.html",
+            uploaded_file_url=filepath,
+            songname=filename,
+            start_time=start_time,
+            end_time=end_time,
+        )
+        else:
+            print("No valid thumbnail found.")
             return render_template(
                 "index.html",
-                uploaded_file_url=filepath,
-                songname=filename,
-                start_time=start_time,
-                end_time=end_time,
-            )
-
-        except Exception as e:
-            # Handle the exception and render an alert
-            print("Audio processing failed:", str(e))
-            return render_template(
-                "index.html",
-                alert="Audio processing failed. Please try again.",
+                alert="No valid thumbnail found. Please try again.",
             )
 
     else:
