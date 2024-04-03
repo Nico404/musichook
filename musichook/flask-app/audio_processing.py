@@ -307,24 +307,28 @@ def moving_average(data, window_size):
     return smoothed_data
 
 
-def correlation_filter(similarity_matrix, window_size):
+def correlation_filter(similarity_matrix, window_size_seconds, chunk_length):
     """
     Filter along the diagonals of the similarity matrix to compute similarity between extended regions of the song.
 
     Parameters:
         similarity_matrix (numpy.ndarray): The similarity matrix.
-        window_size (int): The size of the moving average window.
+        window_size_seconds (float): The size of the moving average window in seconds.
+        chunk_length (int): The length of each chunk in milliseconds.
 
     Returns:
         numpy.ndarray: The restructured time-lag matrix.
     """
+    # Calculate the window size in terms of number of chunks
+    window_size_chunks = int(window_size_seconds * 1000 / chunk_length)
+
     n_samples = similarity_matrix.shape[0]
     time_lag_matrix = np.zeros_like(similarity_matrix)
 
     # Apply uniform moving average filter along diagonals
     for i in range(n_samples):
         diagonal_data = similarity_matrix.diagonal(i)
-        smoothed_diagonal = moving_average(diagonal_data, window_size)
+        smoothed_diagonal = moving_average(diagonal_data, window_size_chunks)
         expected_length = n_samples - i
         if len(smoothed_diagonal) != expected_length:
             if len(smoothed_diagonal) > expected_length:
@@ -350,7 +354,7 @@ def select_thumbnail(time_lag_surface: np.ndarray, chunk_length: int) -> float |
     Returns:
         float | None: The start time of the selected thumbnail if it satisfies the constraints, otherwise returns None.
     """
-    n_chunks = time_lag_surface.shape[1]
+    n_chunks = time_lag_surface.shape[0]
     # Calculate the length of each chunk in seconds
     chunk_length_seconds = chunk_length / 1000
 
