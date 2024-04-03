@@ -8,7 +8,7 @@ This repository explores various techniques for music thumbnailing, a process of
 
 ### Demo App [musichook-app](https://musichook-qz5vasr6bq-ew.a.run.app/upload)
 
-![Thumbnailing-app](https://i.imgur.com/g26op22.png)
+![Thumbnailing-app](https://i.imgur.com/Yaz96x0.png)
 
 
 ## Sound Similarity
