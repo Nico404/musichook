@@ -41,9 +41,11 @@ def upload_file():
         print("File uploaded successfully:", filename)
 
         ### Audio Processing
-        chunk_length = 500
+        chunk_length_ms = 500
+        window_size_seconds = 20
+
         print("Cutting the song into segments...")
-        quarter_second_segments = cut_song_into_segments(filepath, chunk_length)
+        quarter_second_segments = cut_song_into_segments(filepath, chunk_length_ms)
         print("Building the feature vector...")
         feature_vector = build_feature_vector(
             quarter_second_segments, True, False, False
@@ -51,9 +53,9 @@ def upload_file():
         print("Compute similarity matrix")
         similarity_matrix = compute_similarity_matrix(feature_vector, "cosine")
         print("Compute time_lag_surface matrix")
-        time_lag_surface = correlation_filter(similarity_matrix, 20)
+        time_lag_surface = correlation_filter(similarity_matrix, window_size_seconds, chunk_length_ms)
         print("Select the thumbnail")
-        start_time = select_thumbnail(time_lag_surface, chunk_length)
+        start_time = select_thumbnail(time_lag_surface, chunk_length_ms)
 
         if start_time is not None:
             print("Start time of the selected thumbnail:", start_time)
