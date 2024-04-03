@@ -16,6 +16,9 @@ build_dev:
 build_prod:
 	docker build --platform linux/amd64 -t $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT)/$(GCP_REPO)/musichook:prod .
 
+run_local:
+	gunicorn -w 4 --timeout 60  musichook.flask-app.app:app
+
 run_dev:
 	docker run -e PORT=8000 -p 8000:8000 musichook:dev
 
