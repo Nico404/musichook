@@ -10,4 +10,4 @@ COPY musichook/flask-app flask-app
 
 RUN pip install -r flask-app/requirements.txt
 
-CMD gunicorn -b 0.0.0.0:$PORT -w 4 --timeout 60 flask-app.app:app
+CMD gunicorn -b 0.0.0.0:$PORT -w 4 --timeout 120 flask-app.app:app
