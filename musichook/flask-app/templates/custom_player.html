@@ -13,15 +13,20 @@
       import WaveSurfer from 'https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.esm.js'
       import RegionsPlugin from 'https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.esm.js'
 
-      // Create your own media element
-      const audio = new Audio()
+      // Define variables
+      let songname = "{{ songname }}";
+      let startTime = "{{ start_time }}"
+      let endTime = "{{ end_time }}"
+      let startTimeMs = parseFloat(startTime) * 1000;
+      let endTimeMs = parseFloat(endTime) * 1000;
+
+      // Create media elements
+      const audio = new Audio() // full audio
+      const chunk = new Audio() // thumbnailed audio
       audio.controls = true
-      // audio.src = 'audio/002 - 8 Mile By Eminem 320 - [m94arius].mp3'
-      // audio.src = 'audio/001 - Creep By Radiohead 320 - [Coldblackice].mp3'
+      chunk.controls = true
       audio.src = "{{ url_for('static', filename='uploads/' + songname) }}"
-      // Define variables for start and end times
-      let startTime = "{{ start_time }}" // Adjust as needed 02:26
-      let endTime = "{{ end_time }}"   // Adjust as needed
+      chunk.src = "/chunk/" + songname + "/" + startTimeMs + "/" + endTimeMs;
 
       const ws = WaveSurfer.create({
         container: '#waveform',
@@ -49,11 +54,37 @@
         });
         // start playing at the start time
         ws.seekTo(startTime / ws.getDuration())
+
+        wsRegions.on('region-updated', async (region) => {
+            console.log('Updated region', region);
+
+            // Calculate start and end times in milliseconds
+            const startMs = region.start * 1000;
+            const endMs = region.end * 1000;
+
+            try {
+              // Fetch the chunked audio asynchronously
+              const response = await fetch(`/chunk/${songname}/${startMs}/${endMs}`);
+              if (!response.ok) {
+                throw new Error(`Failed to fetch chunk: ${response.status} ${response.statusText}`);
+              }
+
+              // Extract the blob containing the audio data
+              const blob = await response.blob();
+              // Create a new URL for the blob
+              const blobUrl = URL.createObjectURL(blob);
+              // Set the chunk src attribute to the blob URL
+              chunk.src = blobUrl;
+
+              console.log("Chunk loaded successfully");
+            } catch (error) {
+              console.error('Error fetching chunk:', error);
+            }
+          });
+
       })
 
-      // Keep track of the playback status
       let isPlaying = false
-
       // Toggle between playing and pausing the audio
       ws.on('click', () => {
         if (isPlaying) {
@@ -66,7 +97,33 @@
       })
 
       document.getElementById('player').appendChild(audio);
+      document.getElementById('thumbnail').appendChild(chunk);
+
+
+      // Add event listener to the export button
+      document.getElementById('exportButton').addEventListener('click', function() {
+        // Create a download link
+        const downloadLink = document.createElement('a');
+        downloadLink.href = chunk.src;
+        downloadLink.click();
+    });
 
     </script>
+
+  </div>
+</div>
+<div class="mt-8 sm:mx-auto sm:w-full sm:max-w-xl">
+  <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+    <div>
+      <h4>Selected Hook</h4>
+    </div>
+    <div id="thumbnail">
+    </div>
+    <div class="mt-6">
+      <button id="exportButton" type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+          Export Hook
+      </button>
+  </div>
+
   </div>
 </div>

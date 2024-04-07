@@ -1,12 +1,13 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, send_file
 import os
-
+from time import sleep
 from .audio_processing import (
     cut_song_into_segments,
     build_feature_vector,
     compute_similarity_matrix,
     correlation_filter,
     select_thumbnail,
+    cut_chunk_into_audio,
 )
 
 
@@ -14,12 +15,31 @@ app = Flask(__name__)
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(ROOT_DIR, "static/uploads")
+CHUNK_FOLDER = os.path.join(ROOT_DIR, "static/chunks")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
 @app.route("/")
 def root():
     return render_template("index.html")
+
+@app.route("/chunk/<filename>/<start_time>/<end_time>", methods=["GET"])
+def chunk(filename, start_time, end_time):
+    song_path = os.path.join(UPLOAD_FOLDER, filename)
+    chunk_filename = f"{filename[:-4]}_{int(float(start_time))}_{int(float(end_time))}.mp3"
+    chunk_path = os.path.join(CHUNK_FOLDER, chunk_filename)
+
+    print("song path:", song_path)
+    print("chunk path:", chunk_path)
+
+    # Clean the chunk folder
+    for file in os.listdir(CHUNK_FOLDER):
+        os.remove(os.path.join(CHUNK_FOLDER, file))
+
+    schunk = cut_chunk_into_audio(song_path, int(float(start_time)), int(float(end_time)))
+    schunk.export(chunk_path, format="mp3")
+
+    return send_file(chunk_path, as_attachment=True)
 
 
 @app.route("/upload", methods=["GET", "POST"])
