@@ -7,6 +7,26 @@ from sklearn.metrics import mean_squared_error
 from scipy.spatial.distance import cosine as cosine_similarity
 
 
+
+def cut_chunk_into_audio(file_path: str, start_time_ms: int, end_time_ms: int) -> AudioSegment:
+    """
+    Cut a chunk of audio from a sound file.
+
+    Args:
+        file_path (str): Path to the sound file.
+        start_time (float): Start time of the chunk in seconds.
+        end_time (float): End time of the chunk in seconds.
+
+    Returns:
+        AudioSegment: The extracted chunk of audio.
+    """
+    song = AudioSegment.from_file(file_path)
+    print(start_time_ms, end_time_ms)
+    chunk = song[start_time_ms:end_time_ms]
+
+    return chunk
+
+
 def cut_audio_into_sliding_intervals(file_path: str, interval_length: float) -> dict:
     """
     Extract 30 seconds segments from a sound file and store them as AudioSegment objects in a dictionary.
