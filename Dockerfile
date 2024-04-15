@@ -7,6 +7,7 @@ ENV PATH="/usr/bin:${PATH}"
 WORKDIR /prod
 
 COPY musichook/flask-app flask-app
+COPY musichook/src musichook/src
 
 RUN pip install -r flask-app/requirements.txt
 
