@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, send_file
 import os
 from time import sleep
-from .audio_processing import (
+from musichook.src.audio_processing import (
     cut_song_into_segments,
     build_feature_vector,
     compute_similarity_matrix,

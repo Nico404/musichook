@@ -7,6 +7,25 @@ from sklearn.metrics import mean_squared_error
 from scipy.spatial.distance import cosine as cosine_similarity
 
 
+
+def cut_chunk_into_audio(file_path: str, start_time_ms: int, end_time_ms: int) -> AudioSegment:
+    """
+    Cut a chunk of audio from a sound file.
+
+    Args:
+        file_path (str): Path to the sound file.
+        start_time (float): Start time of the chunk in seconds.
+        end_time (float): End time of the chunk in seconds.
+
+    Returns:
+        AudioSegment: The extracted chunk of audio.
+    """
+    song = AudioSegment.from_file(file_path)
+    print(start_time_ms, end_time_ms)
+    chunk = song[start_time_ms:end_time_ms]
+    return chunk
+
+
 def cut_audio_into_sliding_intervals(file_path: str, interval_length: float) -> dict:
     """
     Extract 30 seconds segments from a sound file and store them as AudioSegment objects in a dictionary.
@@ -307,24 +326,28 @@ def moving_average(data, window_size):
     return smoothed_data
 
 
-def correlation_filter(similarity_matrix, window_size):
+def correlation_filter(similarity_matrix, window_size_seconds, chunk_length):
     """
     Filter along the diagonals of the similarity matrix to compute similarity between extended regions of the song.
 
     Parameters:
         similarity_matrix (numpy.ndarray): The similarity matrix.
-        window_size (int): The size of the moving average window.
+        window_size_seconds (float): The size of the moving average window in seconds.
+        chunk_length (int): The length of each chunk in milliseconds.
 
     Returns:
         numpy.ndarray: The restructured time-lag matrix.
     """
+    # Calculate the window size in terms of number of chunks
+    window_size_chunks = int(window_size_seconds * 1000 / chunk_length)
+
     n_samples = similarity_matrix.shape[0]
     time_lag_matrix = np.zeros_like(similarity_matrix)
 
     # Apply uniform moving average filter along diagonals
     for i in range(n_samples):
         diagonal_data = similarity_matrix.diagonal(i)
-        smoothed_diagonal = moving_average(diagonal_data, window_size)
+        smoothed_diagonal = moving_average(diagonal_data, window_size_chunks)
         expected_length = n_samples - i
         if len(smoothed_diagonal) != expected_length:
             if len(smoothed_diagonal) > expected_length:
@@ -334,7 +357,7 @@ def correlation_filter(similarity_matrix, window_size):
     return time_lag_matrix
 
 
-def select_thumbnail(time_lag_surface: np.ndarray) -> tuple[float, float] | None:
+def select_thumbnail(time_lag_surface: np.ndarray, chunk_length: int) -> float | None:
     """
     Selects a thumbnail position from a time-lag surface.
 
@@ -345,28 +368,34 @@ def select_thumbnail(time_lag_surface: np.ndarray) -> tuple[float, float] | None
 
     Parameters:
         time_lag_surface (numpy.ndarray): The time-lag surface matrix.
+        chunk_length (int): The length of each chunk in milliseconds.
 
     Returns:
-        tuple[float, float] | None: A tuple containing the time-position of the maximum element
-        if it satisfies the constraints, otherwise returns None.
+        float | None: The start time of the selected thumbnail if it satisfies the constraints, otherwise returns None.
     """
-    n_samples = time_lag_surface.shape[0]
+    n_chunks = time_lag_surface.shape[0]
+    # Calculate the length of each chunk in seconds
+    chunk_length_seconds = chunk_length / 1000
+
     max_value = -float("inf")
-    max_position = None
+    max_start_time = None
 
     # Find the maximum value in the time-lag surface matrix
-    for i in range(n_samples):
-        for j in range(n_samples):
-            if i > j and j > n_samples // 10 and j < 3 * n_samples // 4:
+    for i in range(n_chunks):
+        for j in range(n_chunks):
+            if i > j and j > (chunk_length_seconds * n_chunks / 10) and j < (3 * chunk_length_seconds * n_chunks / 4):
                 if time_lag_surface[i, j] > max_value:
                     max_value = time_lag_surface[i, j]
-                    max_position = (i, j)
+                    # Calculate the start time from the chunk index and chunk length
+                    max_start_time = i * chunk_length_seconds
 
-    # Check if a valid maximum position is found
-    if max_position is not None:
-        return max_position
+    # Check if a valid maximum start time is found
+    if max_start_time is not None:
+        return max_start_time
     else:
         return None
+
+
 
 
 def format_time_tuple(start_time: float, length: float) -> tuple[str, str]:
