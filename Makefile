@@ -30,3 +30,8 @@ push_prod:
 
 deploy_prod:
 	gcloud run deploy --image $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT)/$(GCP_REPO)/musichook:prod --memory 8Gi --region $(GCP_REGION)
+
+ship_fast:
+	make build_prod
+	make push_prod
+	make deploy_prod
