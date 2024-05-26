@@ -82,8 +82,7 @@ def display_similarity_matrix(
         height (int): Height of the figure in inches.
     """
     plt.figure(figsize=(width, height))
-    plt.imshow(similarity_matrix, origin="lower", cmap="gray")
-    plt.colorbar()
+    plt.imshow(similarity_matrix, origin="lower", cmap="Greys")
     plt.xlabel(x_axis_title)
     plt.ylabel(y_axis_title)
     plt.show()
@@ -110,7 +109,7 @@ def display_time_lag_surface(
     time_lag_surface_transformed = np.flipud(time_lag_surface.T)
 
     plt.figure(figsize=(width, height))
-    plt.imshow(time_lag_surface_transformed, origin="lower", cmap="gray")
+    plt.imshow(time_lag_surface_transformed, origin="lower", cmap="gray_r")
     plt.colorbar()
     plt.xlabel(x_axis_title)
     plt.ylabel(y_axis_title)
