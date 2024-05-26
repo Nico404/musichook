@@ -273,7 +273,7 @@ def compute_similarity_matrix(
 
     Parameters:
         feature_vectors (dict of numpy arrays): Dictionary containing feature vectors.
-        metric (str): Metric for computing similarity. Can be 'cosine' or 'pearson_correlation'.
+        metric (str): Metric for computing similarity. Can be 'pearson_correlation'.
 
     Returns:
         similarity_matrix (numpy array): Similarity matrix between pairs of arrays.
@@ -281,143 +281,89 @@ def compute_similarity_matrix(
     num_arrays = len(feature_vectors)
     similarity_matrix = np.zeros((num_arrays, num_arrays))
 
-    for i, vec1 in enumerate(feature_vectors.values()):
-        for j, vec2 in enumerate(feature_vectors.values()):
+    # Normalize the feature vectors by subtracting the mean of each vector
+    normalized_feature_vectors = {key: vec - np.mean(vec) for key, vec in feature_vectors.items()}
+
+    for i, vec1 in enumerate(normalized_feature_vectors.values()):
+        for j, vec2 in enumerate(normalized_feature_vectors.values()):
             if j < i:
                 similarity_matrix[i, j] = similarity_matrix[j, i]
-
-            if metric == "pearson_correlation":
-                correlation_coefficient = np.corrcoef(np.ravel(vec1), np.ravel(vec2))[
-                    0, 1
-                ]
-                similarity_score = correlation_coefficient
-            elif metric == "cosine":
-                similarity_score = 1 - cosine_similarity(np.ravel(vec1), np.ravel(vec2))
             else:
-                raise ValueError(
-                    "Invalid metric. Choose either 'cosine' or 'pearson_correlation'."
-                )
+                if metric == "pearson_correlation":
+                    # Check if either vector is constant (std dev is zero)
+                    if np.std(vec1) == 0 or np.std(vec2) == 0:
+                        similarity_score = 0  # Assign zero similarity if either vector is constant
+                    else:
+                        correlation_coefficient = np.corrcoef(np.ravel(vec1), np.ravel(vec2))[0, 1]
+                        similarity_score = correlation_coefficient
+                else:
+                    raise ValueError("Invalid metric. Choose 'pearson_correlation'.")
 
-            similarity_matrix[i, j] = similarity_score
+                similarity_matrix[i, j] = similarity_score
+                if i != j:
+                    similarity_matrix[j, i] = similarity_score
 
     return similarity_matrix
 
-
-def moving_average(data, window_size):
+def compute_time_lag_surface(similarity_matrix: np.ndarray, filter_length: int) -> np.ndarray:
     """
-    Apply a uniform moving average filter to a one-dimensional array of data.
+    Compute the time-lag surface from the similarity matrix by applying a moving average filter along diagonals.
 
     Parameters:
-        data (numpy.ndarray): Input data array.
-        window_size (int): Size of the moving average window.
+        similarity_matrix (numpy array): Similarity matrix.
+        filter_length (int): Length of the moving average filter.
 
     Returns:
-        numpy.ndarray: The array after applying the moving average filter.
+        time_lag_matrix (numpy array): Time-lag surface.
     """
-    # Pad the data array to handle mode 'valid' properly
-    padding = window_size // 2  # adjust padding based on the window size
-    padded_data = np.pad(data, (padding, padding), mode="edge")
+    num_frames = similarity_matrix.shape[0]
+    time_lag_matrix = np.zeros((num_frames, num_frames))
 
-    # Apply convolution with mode 'valid'
-    smoothed_data = np.convolve(
-        padded_data, np.ones(window_size) / window_size, mode="valid"
-    )
-
-    return smoothed_data
-
-
-def correlation_filter(similarity_matrix, window_size_seconds, chunk_length):
-    """
-    Filter along the diagonals of the similarity matrix to compute similarity between extended regions of the song.
-
-    Parameters:
-        similarity_matrix (numpy.ndarray): The similarity matrix.
-        window_size_seconds (float): The size of the moving average window in seconds.
-        chunk_length (int): The length of each chunk in milliseconds.
-
-    Returns:
-        numpy.ndarray: The restructured time-lag matrix.
-    """
-    # Calculate the window size in terms of number of chunks
-    window_size_chunks = int(window_size_seconds * 1000 / chunk_length)
-
-    n_samples = similarity_matrix.shape[0]
-    time_lag_matrix = np.zeros_like(similarity_matrix)
-
-    # Apply uniform moving average filter along diagonals
-    for i in range(n_samples):
-        diagonal_data = similarity_matrix.diagonal(i)
-        smoothed_diagonal = moving_average(diagonal_data, window_size_chunks)
-        expected_length = n_samples - i
-        if len(smoothed_diagonal) != expected_length:
-            if len(smoothed_diagonal) > expected_length:
-                smoothed_diagonal = smoothed_diagonal[:-1]  # Remove the last element
-        time_lag_matrix[i, i:] = smoothed_diagonal
+    for lag in range(num_frames):
+        diagonal = np.diagonal(similarity_matrix, offset=lag)
+        if len(diagonal) >= filter_length:
+            filtered_diagonal = np.convolve(diagonal, np.ones(filter_length) / filter_length, mode='valid')
+            time_lag_matrix[lag, lag:lag + len(filtered_diagonal)] = filtered_diagonal
 
     return time_lag_matrix
 
 
-def select_thumbnail(time_lag_surface: np.ndarray, chunk_length: int) -> float | None:
-    """
-    Selects a thumbnail position from a time-lag surface.
+import numpy as np
 
-    This selection occurs by locating the maximum element of the time-lag matrix
-    subject to two constraints:
-    - a lag greater than one-tenth the length of the song
-    - occurs less than three-fourths of the way into the song.
+def find_thumbnail(time_lag, song_length):
+    """
+    Finds the optimal thumbnail position and length within a time-lag matrix.
 
     Parameters:
-        time_lag_surface (numpy.ndarray): The time-lag surface matrix.
-        chunk_length (int): The length of each chunk in milliseconds.
+    time_lag : numpy.ndarray
+        A 2D numpy array representing the time-lag matrix.
+    song_length : int or float
+        The length of the song in seconds.
 
     Returns:
-        float | None: The start time of the selected thumbnail if it satisfies the constraints, otherwise returns None.
+    tuple
+        A tuple containing the thumbnail position and length.
+        thumbnail_time_position : int
+            The time position of the thumbnail within the song.
+        thumbnail_length : int
+            The length of the thumbnail.
     """
-    n_chunks = time_lag_surface.shape[0]
-    # Calculate the length of each chunk in seconds
-    chunk_length_seconds = chunk_length / 1000
+    # Calculate constraints
+    lag_threshold = int(song_length / 10)
+    max_lag_position = int(3 * song_length / 4)
 
-    max_value = -float("inf")
-    max_start_time = None
+    # Apply constraints to time_lag matrix
+    constrained_time_lag = time_lag.copy()
+    constrained_time_lag[:lag_threshold, :] = 0
+    constrained_time_lag[max_lag_position:, :] = 0
 
-    # Find the maximum value in the time-lag surface matrix
-    for i in range(n_chunks):
-        for j in range(n_chunks):
-            if i > j and j > (chunk_length_seconds * n_chunks / 10) and j < (3 * chunk_length_seconds * n_chunks / 4):
-                if time_lag_surface[i, j] > max_value:
-                    max_value = time_lag_surface[i, j]
-                    # Calculate the start time from the chunk index and chunk length
-                    max_start_time = i * chunk_length_seconds
+    # Find the maximum element in the constrained time_lag matrix
+    max_index = np.unravel_index(np.argmax(constrained_time_lag), constrained_time_lag.shape)
 
-    # Check if a valid maximum start time is found
-    if max_start_time is not None:
-        return max_start_time
-    else:
-        return None
+    # Extract time-position of the maximum
+    thumbnail_time_position = max_index[1]
 
+    # Define the thumbnail length
+    thumbnail_length = max_index[0]
 
-
-
-def format_time_tuple(start_time: float, length: float) -> tuple[str, str]:
-    """
-    Convert a time tuple (start_time, length) to formatted start and end time strings.
-
-    Parameters:
-        start_time (float): The start time in seconds.
-        length (float): The length of the time interval in seconds.
-
-    Returns:
-        tuple[str, str]: A tuple containing the formatted start and end time strings in the format 'mm:ss'.
-    """
-    # Calculate the end time based on the start time and length
-    end_time = start_time + length
-
-    # Convert start time and end time from seconds to minutes and seconds
-    start_minutes, start_seconds = divmod(int(start_time), 60)
-    end_minutes, end_seconds = divmod(int(end_time), 60)
-
-    # Format start time and end time as 'mm:ss'
-    start_time_formatted = f"{start_minutes:02d}:{start_seconds:02d}"
-    end_time_formatted = f"{end_minutes:02d}:{end_seconds:02d}"
-
-    return start_time_formatted, end_time_formatted
+    return thumbnail_time_position, thumbnail_length

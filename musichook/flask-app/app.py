@@ -5,8 +5,8 @@ from musichook.src.audio_processing import (
     cut_song_into_segments,
     build_feature_vector,
     compute_similarity_matrix,
-    correlation_filter,
-    select_thumbnail,
+    compute_time_lag_surface,
+    find_thumbnail,
     cut_chunk_into_audio,
 )
 
@@ -61,21 +61,21 @@ def upload_file():
         print("File uploaded successfully:", filename)
 
         ### Audio Processing
-        chunk_length_ms = 500
-        window_size_seconds = 20
+        chunk_length_ms = 1000
+        window_size_seconds = 10
 
         print("Cutting the song into segments...")
-        quarter_second_segments = cut_song_into_segments(filepath, chunk_length_ms)
+        second_segments = cut_song_into_segments(filepath, chunk_length_ms)
         print("Building the feature vector...")
         feature_vector = build_feature_vector(
-            quarter_second_segments, True, False, False
+            second_segments, True, False, False
         )
         print("Compute similarity matrix")
-        similarity_matrix = compute_similarity_matrix(feature_vector, "cosine")
+        similarity_matrix = compute_similarity_matrix(feature_vector)
         print("Compute time_lag_surface matrix")
-        time_lag_surface = correlation_filter(similarity_matrix, window_size_seconds, chunk_length_ms)
+        time_lag_surface = compute_time_lag_surface(similarity_matrix, window_size_seconds)
         print("Select the thumbnail")
-        start_time = select_thumbnail(time_lag_surface, chunk_length_ms)
+        _, start_time = find_thumbnail(time_lag_surface, len(second_segments))
 
         if start_time is not None:
             print("Start time of the selected thumbnail:", start_time)
@@ -86,8 +86,8 @@ def upload_file():
             "index.html",
             uploaded_file_url=filepath,
             songname=filename,
-            start_time=start_time,
-            end_time=end_time,
+            start_time=start_time - 2,
+            end_time=end_time - 2,
         )
         else:
             print("No valid thumbnail found.")
